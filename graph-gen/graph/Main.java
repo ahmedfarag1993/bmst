@@ -28,13 +28,17 @@ public class Main {
 
 		// --- END OF INPUT ---
 
-		// +++ MATRIX CREATION +++
+		// +++ MATRIX CREATION [ADJ -> SYMMETRIC] +++
 
 		adjMatrix = new double[numVert][numVert];
+		
+		// fill the top-right corner of the matrix
+		// with random weights
 
 		for (int i = 0; i < numVert; i++) {
-			for (int j = 0; j < numVert; j++) {
+			for (int j = i; j < numVert; j++) {
 				if (i != j) {
+					// random weight
 					adjMatrix[i][j] = rand.nextDouble() * 10;
 					n = (int) (adjMatrix[i][j] * 100);
 					adjMatrix[i][j] = (double) n / 100;
@@ -42,6 +46,12 @@ public class Main {
 					adjMatrix[i][j] = 0; // null weight on diagonal
 			}
 		}
+		
+		// copying the top-right corner into the bottom-left corner
+		
+		for (int j = 0; j < numVert; j++)
+			for (int i = j; i < numVert; i++)
+					adjMatrix[i][j] = adjMatrix[j][i];
 
 		// --- END OF MATRIX CREATION ---
 
