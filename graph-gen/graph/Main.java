@@ -1,6 +1,9 @@
 package graph;
 
-import java.text.DecimalFormat;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -11,10 +14,14 @@ public class Main {
 
 	/**
 	 * @param args
+	 * @throws IOException
 	 */
 	public static void main(String[] args) {
+		int n;
 		Scanner in = new Scanner(System.in);
 		Random rand = new Random();
+
+		// +++ INPUT +++
 
 		System.out.println("*** Graph Generator v 1.0 ***");
 		System.out.println();
@@ -24,28 +31,77 @@ public class Main {
 
 		in.close();
 
+		// --- END OF INPUT ---
+
+		// +++ MATRIX CREATION +++
+
 		adjMatrix = new double[numVert][numVert];
 
 		for (int i = 0; i < numVert; i++) {
 			for (int j = 0; j < numVert; j++) {
-				adjMatrix[i][j] = rand.nextDouble() * 10;
-				int n = (int) (adjMatrix[i][j] * 100);
-				adjMatrix[i][j] = (double) n / 100;
+				if (i != j) {
+					adjMatrix[i][j] = rand.nextDouble() * 10;
+					n = (int) (adjMatrix[i][j] * 100);
+					adjMatrix[i][j] = (double) n / 100;
+				} else
+					adjMatrix[i][j] = 0; // null weight on diagonal
 			}
 		}
 
-		print();
+		// --- END OF MATRIX CREATION ---
 
-	}
+		// +++ FILE CREATION +++
 
-	private static void print() {
+		File file = new File("./graph.txt");
+
+		// if file doesn't exists, then create it
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				System.out.println("[CREATE] Error.");
+				e.printStackTrace();
+			}
+		}
+
+		FileWriter fw = null;
+		try {
+			fw = new FileWriter(file.getAbsoluteFile());
+		} catch (IOException e) {
+			System.out.println("[BUFFERING] Error.");
+			e.printStackTrace();
+		}
+
+		if (fw == null) // CHECK
+			System.out.println("[NULL] Unknown File.");
+		BufferedWriter bw = new BufferedWriter(fw);
+
 		for (int i = 0; i < numVert; i++) {
-			System.out.print("[" + adjMatrix[i][0]);
-			for (int j = 1; j < numVert; j++) {
-				System.out.print("\t" + adjMatrix[i][j]);
+			for (int j = 0; j < numVert - 1; j++) {
+				try {
+					bw.write(adjMatrix[i][j] + "\t");
+				} catch (IOException e) {
+					System.out.println("[WRITE] Error.");
+					e.printStackTrace();
+				}
 			}
-			System.out.println("]");
+			try {
+				bw.write("" + adjMatrix[i][numVert - 1] + "\n");
+			} catch (IOException e) {
+				System.out.println("[WRITE] Error.");
+				e.printStackTrace();
+			}
 		}
-	}
+		try {
+			bw.close();
+		} catch (IOException e) {
+			System.out.println("[CLOSE] Error.");
+			e.printStackTrace();
+		}
 
+		System.out.println("[DONE] Matrix written in " + file);
+
+		// --- END OF FILE CREATION ---
+
+	}
 }
