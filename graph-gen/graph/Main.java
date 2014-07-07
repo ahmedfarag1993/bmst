@@ -9,15 +9,10 @@ import java.util.Scanner;
 
 public class Main {
 
-	static int numVert;
-	static double[][] adjMatrix;
-
-	/**
-	 * @param args
-	 * @throws IOException
-	 */
 	public static void main(String[] args) {
-		int n;
+		int numVert, n;
+		double[][] adjMatrix;
+		
 		Scanner in = new Scanner(System.in);
 		Random rand = new Random();
 
