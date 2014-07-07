@@ -1,6 +1,6 @@
-##Borouvka Algorithm MST
+##Boruvka Algorithm MST
 
-Parallel Implementation of Borouvka Minimum Spanning Tree
+Parallel Implementation of Boruvka Minimum Spanning Tree
 
 
 ##How to build
