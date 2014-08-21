@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
   
   float buffer;
   int col;
-  int raw;
+  int row;
   int count = 1;
   
   int rankBcast;
@@ -103,13 +103,13 @@ int main(int argc, char *argv[]) {
   
       buffer = mr[indexR][indexC];
       col = indexC;
-      raw = indexR;
+      row = indexR;
   
       MPI_Bcast(&buffer, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);  
       MPI_Bcast(&col, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
-      MPI_Bcast(&raw, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+      MPI_Bcast(&row, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
   
-      mr[raw][col] = buffer;
+      mr[row][col] = buffer;
   
       //printf("=== Buffer [%d]: %.2f\n", rank, buffer);
   
@@ -129,6 +129,65 @@ int main(int argc, char *argv[]) {
 	         printf("\n");
 	      }
   }
+  
+  /* SYNC */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  /* 2a FASE */
+  
+  int array[n];
+  int indexArray = 1;
+  int* pointer; 
+  
+  // inizializzazione array
+  for(j = 0; j < n; j++)
+      array[j] = -1;
+  
+  array[0] = rank;
+  pointer = &array[1];
+  
+  //printf("[%d] pointer: %d\n", rank, pointer);
+  //printf("[%d] *pointer: %d\n", rank, *pointer);
+  //printf("[%d] array: %d\n", rank, &array[0]);
+  
+  for(j = 0; j < n; j++) { // scansione riga alla ricerca di pesi min
+      if(mr[rank][j] != 0) {
+         array[indexArray] = j; // inserimento colonna dei pesi minimi in array
+         indexArray++;
+      }    
+  }
+  
+  // printf("[%d] *pointer: %d\n", rank, *pointer);
+  
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  int control = 0;
+  
+  while(*pointer != -1) { 
+      for(j = 0; j < n; j++) { // scansione sulle colonne
+         if(mr[*pointer][j] != 0) { // nuovi elementi
+            for(i = 0; i < n; i++) {
+               if(array[i] == j) { // controllo se c'e' gia' nell'array
+                  control = 1;
+                  break;
+               }
+            }
+            
+            if(control == 0) {
+               array[indexArray] = j;
+               indexArray++;
+            }
+                        
+         }
+      }
+      pointer++;
+  }
+  
+   printf("[%d] array: ", rank);
+      for(i = 0; i < n; i++) {
+         printf("%d ", array[i]);
+      }
+   printf("\n");
   
   MPI_Finalize();
 
