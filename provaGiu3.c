@@ -7,11 +7,11 @@ int main(int argc, char *argv[]) {
 /* LEGGE E MEMORIZZA IL FILE CON IL GRAFO SU UNA MATRICE */
 
   FILE *file;
-  int n = 10;
+  int n = 7;
   float matrix[n][n]; // matrice input
   float mr[n][n]; // matrice risultato
 
-  file = fopen("./graph-gen/graph.txt", "r"); // apre il file
+  file = fopen("./graph-gen/graph2.txt", "r"); // apre il file
   if (file == NULL) {
       perror("Errore in apertura del file");
       exit(1);
@@ -161,6 +161,7 @@ int main(int argc, char *argv[]) {
   
   // printf("[%d] *pointer: %d\n", rank, *pointer);
   
+  /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
   int control = 0;
@@ -190,6 +191,100 @@ int main(int argc, char *argv[]) {
          printf("%d ", array[i]);
       }
    printf("\n");
+   
+   /* COMUNICAZIONE E CREAZIONE SUPERNODO */
+   
+   //int rankDest;
+   int buf;
+   int tmp[n];
+   int v, u;
+   control = 0;
+   
+   for(i = 0; i < n; i++) { // copio array in tmp per invio
+      tmp[i] = array[i];
+   }
+   
+   //printf("--- [%d] tmp: ", rank); // tmp diag
+   //   for(i = 0; i < n; i++) {
+   //      printf("%d ", tmp[i]);
+   //   }
+   //printf("\n");
+   
+         for(v = 0; v < n; v++) {
+            //printf("=== index: %d\n", v);
+            
+            buf = array[v]; // prendo elemento array
+            
+            //printf("### [%d] buf: %d\n", rank, buf);
+            
+            MPI_Bcast(&buf, count, MPI_INT, 5, MPI_COMM_WORLD); // invio a tutti
+              
+            /* SYNC */
+            MPI_Barrier(MPI_COMM_WORLD);
+            
+            printf("### B%d [%d] buf: %d\n", v, rank, buf);
+            
+            for(k = 0; k < n; k++) { // array destinatario
+               if(array[k] == buf && array[k] != -1) { // se ho trovato l'elemento del mittente
+                  control = 1;
+                  
+                  MPI_Bcast(&tmp, count, MPI_INT, 5, MPI_COMM_WORLD); // invio tutto l'array
+                  
+                  //printf("--- B [%d] tmp: ", rank);
+                  //for(u = 0; u < n; u++) {
+                  //   printf("%d ", tmp[u]);
+                  //}
+                  //printf("\n");
+               }
+               if(control == 1) {
+                  break;
+                  //i = n;
+               }
+            }
+            
+            /* SYNC */
+            MPI_Barrier(MPI_COMM_WORLD);
+            
+            printf("[%d] B array: ", rank);
+            for(i = 0; i < n; i++) {
+               printf("%d ", array[i]);
+            }
+            printf("\n");
+            
+            /* SYNC */
+            MPI_Barrier(MPI_COMM_WORLD);
+            
+            if(control == 1) {
+            int found;
+            
+               for(i = 0; i < n; i++) {
+                  found = 0;
+                  for(j = 0; j < n; j++) {
+                     if(tmp[i] == array[j]) {
+                        found = 1;
+                     }
+                     if (found == 1) {
+                        j = n;
+                     }
+                  }
+                  if (found == 0) {
+                     array[indexArray] = tmp[i];
+                     indexArray++;
+                  }
+               }
+            }
+            control = 0;
+         }
+   
+   /* SYNC */
+   //MPI_Barrier(MPI_COMM_WORLD);
+   
+   //printf("[%d] B array: ", rank);
+   //   for(i = 0; i < n; i++) {
+   //      printf("%d ", array[i]);
+   //   }
+   //printf("\n");
+   
   
   MPI_Finalize();
 
