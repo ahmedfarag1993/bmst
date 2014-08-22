@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
   for (k = 0; k < n; k++) {
       if (matrix[rank][k] != 0) {
    		min = matrix[rank][k];
+   		indexR = rank; // salvo riga
+	      indexC = k; // salvo colonna
    		break;
    	}
   }
