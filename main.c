@@ -112,6 +112,7 @@ int main(int argc, char *argv[]) {
       MPI_Bcast(&row, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
   
       mr[row][col] = buffer;
+      mr[col][row] = mr[row][col];
   
       //printf("=== Buffer [%d]: %.2f\n", rank, buffer);
   
@@ -358,15 +359,42 @@ int main(int argc, char *argv[]) {
   
   int kmin = -1;
   k = 0;
-  
-  if(sendIndexCArray[sendMinArray[rank]]
-  
-  for(k = 1; k < n; k++) {
-      if(min > sendMinArray[k]) {
-         if
-         min = sendMinArray[k];
-         kmin = k;
+  int y, t;
+  int controlB;
+  controlB = 0;
+  float max = 0;
+
+   for (y = 0; y < n; y++) {
+      if (sendMinArray[y] > max) {
+         for (t = 0; t < n; t++) { //di questo max controlla che il sendIndexCArray non appartenga al suo supernodo
+            if (sendIndexCArray[y] == array[t]) {
+               controlB = 1; //se è del suo supernodo
+            }
+         }
+         if (controlB == 0) {
+            max = sendMinArray[y];
+            indexR = sendIndexRArray[y];
+            indexC = sendIndexCArray[y];
+         }
       }
+      controlB = 0;
+   }
+ 
+   controlB = 0;
+
+  for(k = 1; k < n; k++) {
+      if(sendMinArray[k] < max) {
+         for (t = 0; t < n; t++) { //di questo controlla che non appartenga al suo supernodo
+            if (sendIndexCArray[k] == array[t]) {
+               controlB = 1; //se è del suo supernodo
+            }
+         }
+         if (controlB == 0) {
+            max = sendMinArray[k]; //se non è del suo supernodo ok mi va bene
+            kmin = k;
+         }
+      }
+   controlB=0;
   }
   
   if(kmin != -1) {
@@ -374,7 +402,8 @@ int main(int argc, char *argv[]) {
       indexC = sendIndexCArray[kmin];
   }
   
-  mr[indexR][indexC] = min;
+  mr[indexR][indexC] = max;
+  mr[indexC][indexR] = mr[indexR][indexC];
   
   //if(rank == root) {
   //    printf(" ----- [%d] sendMin: %.2f, sendIndexR: %d, sendIndexC: %d\n", rank, sendMin, sendIndexR, sendIndexC);
@@ -384,7 +413,7 @@ int main(int argc, char *argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   
   // print test
-  if (rank == 0) {
+  if (rank == 2) {
       printf(" *** MATRICE RISULTATO [%d] ***\n", rank);
          for(i = 0; i < n; i++) {
 	  	      for(j = 0; j < n; j++) {
@@ -393,7 +422,8 @@ int main(int argc, char *argv[]) {
 	         printf("\n");
 	      }
   }
-  
+
+
   MPI_Finalize();
 
 } //chiude il main
