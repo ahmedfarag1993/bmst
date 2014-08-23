@@ -267,55 +267,118 @@ int main(int argc, char *argv[]) {
   float sendMin = min;
   int sendIndexR = indexR;
   int sendIndexC = indexC;
+   
+  float sendMinArray[n+1];
+  int sendIndexRArray[n+1];
+  int sendIndexCArray[n+1];
+  
+  int h;
+  
+  for(g = 0; g < n+1; g++) {
+      sendMinArray[g] = -1;
+      sendIndexRArray[g] = -1;
+      sendIndexCArray[g] = -1;
+  }
+  
   g = 0;
+  h = 0;
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
   MPI_Send(&sendMin, count, MPI_FLOAT, root, 0, MPI_COMM_WORLD);
-  printf(" >>> [%d] sendMin: %.2f\n", rank, sendMin);
+  //printf(" >>> [%d] sendMin: %.2f\n", rank, sendMin);
   if(rank == root) {
       while(array[g] != -1) {
          MPI_Recv(&sendMin, 1, MPI_FLOAT, array[g], 0, MPI_COMM_WORLD, &status);
-         printf(" <<<<< [%d] sendMin: %.2f, from: %d\n", rank, sendMin, array[g]);
+         sendMinArray[h] = sendMin;         
+         //printf(" <<<<< [%d] sendMin: %.2f, from: %d\n", rank, sendMin, array[g]);
          g++;
+         h++;
       }
+      
+      printf("[%d] sendMinArray: ", rank);
+      for(i = 0; i < n; i++) {
+         printf("%.2f ", sendMinArray[i]);
+      }
+      printf("\n");
+      
   }
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
   g = 0;
+  h = 0;
   MPI_Send(&sendIndexR, count, MPI_INT, root, 0, MPI_COMM_WORLD);
-  printf(" >>> [%d] sendIndexR: %d\n", rank, sendIndexR);
+  //printf(" >>> [%d] sendIndexR: %d\n", rank, sendIndexR);
   if(rank == root) {
       while(array[g] != -1) {
          MPI_Recv(&sendIndexR, 1, MPI_INT, array[g], 0, MPI_COMM_WORLD, &status);
-         printf(" <<<<< [%d] sendIndexR: %d, from: %d\n", rank, sendIndexR, array[g]);
+         sendIndexRArray[h] = sendIndexR;
+         //printf(" <<<<< [%d] sendIndexR: %d, from: %d\n", rank, sendIndexR, array[g]);
          g++;
+         h++;
       }
+      
+      printf("[%d] sendIndexRArray: ", rank);
+      for(i = 0; i < n; i++) {
+         printf("%d ", sendIndexRArray[i]);
+      }
+      printf("\n");
+      
   }
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
   g = 0;
+  h = 0;
   MPI_Send(&sendIndexC, count, MPI_INT, root, 0, MPI_COMM_WORLD);
-  printf(" >>> [%d] sendIndexC: %d\n", rank, sendIndexC);
+  //printf(" >>> [%d] sendIndexC: %d\n", rank, sendIndexC);
   if(rank == root) {
       while(array[g] != -1) {
          MPI_Recv(&sendIndexC, 1, MPI_INT, array[g], 0, MPI_COMM_WORLD, &status);
-         printf(" <<<<< [%d] sendIndexC: %d, from: %d\n", rank, sendIndexC, array[g]);
+         sendIndexCArray[h] = sendIndexC;
+         //printf(" <<<<< [%d] sendIndexC: %d, from: %d\n", rank, sendIndexC, array[g]);
          g++;
+         h++;
       }
+      
+      printf("[%d] sendIndexCArray: ", rank);
+      for(i = 0; i < n; i++) {
+         printf("%d ", sendIndexCArray[i]);
+      }
+      printf("\n");
+      
   }
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
-  if(rank == root) {
-      printf(" ----- [%d] sendMin: %.2f, sendIndexR: %d, sendIndexC: %d\n", rank, sendMin, sendIndexR, sendIndexC);
+  int kmin = -1;
+  k = 0;
+  
+  if(sendIndexCArray[sendMinArray[rank]]
+  
+  for(k = 1; k < n; k++) {
+      if(min > sendMinArray[k]) {
+         if
+         min = sendMinArray[k];
+         kmin = k;
+      }
   }
+  
+  if(kmin != -1) {
+      indexR = sendIndexRArray[kmin];
+      indexC = sendIndexCArray[kmin];
+  }
+  
+  mr[indexR][indexC] = min;
+  
+  //if(rank == root) {
+  //    printf(" ----- [%d] sendMin: %.2f, sendIndexR: %d, sendIndexC: %d\n", rank, sendMin, sendIndexR, sendIndexC);
+  //}
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
