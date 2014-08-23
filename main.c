@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   /* FINE COMUNICAZIONE */
   
   // print test
-  if (rank == 0) {
+  if (rank == 1) {
       printf(" *** MATRICE RISULTATO [%d] ***\n", rank);
          for(i = 0; i < n; i++) {
 	  	      for(j = 0; j < n; j++) {
@@ -412,9 +412,46 @@ int main(int argc, char *argv[]) {
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
-  // print test
-  if (rank == 2) {
-      printf(" *** MATRICE RISULTATO [%d] ***\n", rank);
+  // root print test
+      if (rank == root) {
+         printf(" *** MATRICE RISULTATO [%d] ***\n", rank);
+            for(i = 0; i < n; i++) {
+	     	      for(j = 0; j < n; j++) {
+	     		      printf("%.2f ", mr[i][j]);
+	            }
+	            printf("\n");
+            }
+      }
+  
+  // broadcast a tutti della matrice risultato aggiornata
+  
+  /* SYNC */
+  //MPI_Barrier(MPI_COMM_WORLD);  
+  
+  for(rankBcast = 0; rankBcast < n; rankBcast++) {
+  
+      buffer = mr[indexR][indexC];
+      col = indexC;
+      row = indexR;
+  
+      MPI_Bcast(&buffer, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);  
+      MPI_Bcast(&col, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+      MPI_Bcast(&row, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+  
+      mr[row][col] = buffer;
+      mr[col][row] = mr[row][col];
+  
+      //printf("=== Buffer [%d]: %.2f\n", rank, buffer);
+  
+      /* SYNC */
+      MPI_Barrier(MPI_COMM_WORLD);
+  }
+  
+  /* SYNC */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  if (rank == 1) {
+      printf(" UPDATE *** MATRICE RISULTATO [%d] ***\n", rank);
          for(i = 0; i < n; i++) {
 	  	      for(j = 0; j < n; j++) {
 	  		      printf("%.2f ", mr[i][j]);
@@ -422,8 +459,7 @@ int main(int argc, char *argv[]) {
 	         printf("\n");
 	      }
   }
-
-
+      
   MPI_Finalize();
 
 } //chiude il main
