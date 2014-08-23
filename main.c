@@ -137,12 +137,12 @@ int main(int argc, char *argv[]) {
   
   /* 2a FASE: CREAZIONE SUPERNODO */
   
-  int array[n];
+  int array[n+1];
   int indexArray = 1;
   int* pointer; 
   
   // inizializzazione array
-  for(j = 0; j < n; j++)
+  for(j = 0; j < n+1; j++)
       array[j] = -1;
   
   array[0] = rank;
@@ -182,7 +182,8 @@ int main(int argc, char *argv[]) {
                array[indexArray] = j; // inserimento riga 
                indexArray++;
             }
-         }     
+         }
+         controlA = 0;     
       }
       pointer++;
    }
@@ -197,7 +198,69 @@ int main(int argc, char *argv[]) {
       }
   printf("\n");
    
-   /* COMUNICAZIONE E CREAZIONE SUPERNODO */
+   /* FINE CREAZIONE SUPERNODO */
+
+ /* ALGORITMO PER TROVARE IL MIN SULLE RIGHE */
+  // ogni processore legge la riga=rank di matrix e scrive il valore min in mr
+  
+  indexR = 0; // indice di riga
+  indexC = 0; // indice di colonna
+  //float min;
+  int g;
+  int root = array[0];
+  controlA=0;  
+
+//ogni nodo conosce il suo root
+  for (g = 1; g < n; g++) {
+      if (array[g] < root && array[g] != -1) {
+         root = array[g];
+      }
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  printf("[%d] root: %d\n", rank, root);
+
+
+  for (k = 0; k < n; k++) {
+       for (g = 0; g < n; g++) {
+         if (array[g] == k) {
+            controlA=1;
+         }
+       }
+       if (controlA == 0) {
+          if (matrix[rank][k] != 0) {
+      		min = matrix[rank][k];
+      		indexR = rank; // salvo riga
+	         indexC = k; // salvo colonna
+      		break;
+      	 }
+       }
+  }
+
+controlA=0;
+
+  for (k = 0; k < n; k++) {
+      for (g = 0; g < n; g++) {
+         if (array[g] == k) {
+            controlA=1;
+         }
+       }
+      if (controlA=0) {
+	      if (matrix[rank][k] < min && matrix[rank][k] != 0) {
+	         min = matrix[rank][k];  // salvo valore
+	         indexR = rank; // salvo riga
+	         indexC = k; // salvo colonna	      	
+	      }
+      }
+  }
+  
+  mr[indexR][indexC] = min; //aggiorno la matrice risultato
+  printf(" *** [%d] %.2f (%d,%d)\n ", rank, min, rank, indexC); // print test
+  
+  /* FINE ALGORITMO */
+  
+
+
 
   MPI_Finalize();
 
