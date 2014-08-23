@@ -414,7 +414,7 @@ int main(int argc, char *argv[]) {
   
   // root print test
       if (rank == root) {
-         printf(" *** MATRICE RISULTATO [%d] ***\n", rank);
+         printf(" ROOT *** MATRICE RISULTATO [%d] ***\n", rank);
             for(i = 0; i < n; i++) {
 	     	      for(j = 0; j < n; j++) {
 	     		      printf("%.2f ", mr[i][j]);
