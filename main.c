@@ -327,6 +327,12 @@ for(;;) {
       
   }
   
+      printf("[%d] sendMinArray: ", rank);
+         for(i = 0; i < n; i++) {
+            printf("%.1f ", sendMinArray[i]);
+         }
+      printf("\n");
+  
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
@@ -383,7 +389,7 @@ for(;;) {
   int y, t;
   int controlB;
   controlB = 0;
-  float max = 0.2;
+  float max = sendMinArray[0];
 
    for (y = 0; y < n; y++) {
       if (sendMinArray[y] > max) {
@@ -423,7 +429,7 @@ for(;;) {
       indexC = sendIndexCArray[kmin];
   }
   
-  if(max != 0.2) {
+  if(max != sendMinArray[0]) {
       mr[indexR][indexC] = max;
       mr[indexC][indexR] = mr[indexR][indexC];
   }
@@ -457,8 +463,6 @@ for(;;) {
       buffer = mr[indexR][indexC];
       col = indexC;
       row = indexR;
-      
-      if(buffer != 0.2) {
   
          MPI_Bcast(&buffer, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);  
          MPI_Bcast(&col, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
@@ -466,8 +470,6 @@ for(;;) {
      
          mr[row][col] = buffer;
          mr[col][row] = mr[row][col];
-      
-      }
   
       //printf("=== Buffer [%d]: %.1f\n", rank, buffer);
   
