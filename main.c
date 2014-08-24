@@ -7,11 +7,11 @@ int main(int argc, char *argv[]) {
 /* LEGGE E MEMORIZZA IL FILE CON IL GRAFO SU UNA MATRICE */
 
   FILE *file;
-  int n = 7;
+  int n = 12;
   float matrix[n][n]; // matrice input
   float mr[n][n]; // matrice risultato
 
-  file = fopen("./graph-gen/graph2.txt", "r"); // apre il file
+  file = fopen("./graph-gen/graph3.txt", "r"); // apre il file
   if (file == NULL) {
       perror("Errore in apertura del file");
       exit(1);
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
       printf(" *** MATRICE IMPORTATA ***\n");
 	      for (i=0; i<n; i++) {
 	  	      for (j=0; j<n; j++) {
-	         	printf("%.2f ", matrix[i][j]);
+	         	printf("%.1f ", matrix[i][j]);
 	   	   }
 		      printf("\n");
 	      }
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
   }
   
   mr[indexR][indexC] = min; //aggiorno la matrice risultato
-  printf(" *** [%d] %.2f (%d,%d)\n ", rank, min, rank, indexC); // print test
+  printf(" *** [%d] %.1f (%d,%d)\n ", rank, min, rank, indexC); // print test
   
   /* FINE ALGORITMO */
   
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
       mr[row][col] = buffer;
       mr[col][row] = mr[row][col];
   
-      //printf("=== Buffer [%d]: %.2f\n", rank, buffer);
+      //printf("=== Buffer [%d]: %.1f\n", rank, buffer);
   
       /* SYNC */
       MPI_Barrier(MPI_COMM_WORLD);
@@ -123,11 +123,11 @@ int main(int argc, char *argv[]) {
   /* FINE COMUNICAZIONE */
   
   // print test
-  if (rank == 1) {
+  if (rank == 0) {
       printf(" *** MATRICE RISULTATO [%d] ***\n", rank);
          for(i = 0; i < n; i++) {
 	  	      for(j = 0; j < n; j++) {
-	  		      printf("%.2f ", mr[i][j]);
+	  		      printf("%.1f ", mr[i][j]);
 	         }
 	         printf("\n");
 	      }
@@ -139,24 +139,43 @@ int main(int argc, char *argv[]) {
   /* 2a FASE: CREAZIONE SUPERNODO */
   
   int array[n+1];
-  int indexArray = 1;
-  int* pointer; 
+  int indexArray;
+  int* pointer;
+  int w, x;
+  int controlA;
+  int counter;
   
   // inizializzazione array
   for(j = 0; j < n+1; j++)
       array[j] = -1;
   
-  array[0] = rank;
+for(;;) {
+
+  counter = 0;
+
+  for(j = 0; j < n; j++) {
+      if(array[j] != -1)
+         counter++;
+  }
+  
+  if(counter == n)
+      break;
+  
+  // inizializzazione array
+  for(j = 0; j < n+1; j++)
+      array[j] = -1;
+      
+  indexArray = 1;
+  array[0] = rank;  
   pointer = &array[0];
-  int w, x;
-  int controlA = 0;
+  controlA = 0;
   
   //printf("[%d] pointer: %d\n", rank, pointer);
   //printf("[%d] *pointer: %d\n", rank, *pointer);
   //printf("[%d] array: %d\n", rank, &array[0]);
 
    while(*pointer != -1) {  
-      for(j = 0; j < n; j++) { // scansione riga alla ricerca di pesi min
+      for(j = 0; j < n; j++) { // scansione riga alla ricerca di elementi diversi da 0
          if(mr[*pointer][j] != 0) {        //scansione righe
             for (w = 0; w < n; w++) {
                if (array[w] == j) {
@@ -257,16 +276,18 @@ int main(int argc, char *argv[]) {
   }
     
   //mr[indexR][indexC] = min; //aggiorno la matrice risultato
+  indexR = rank; // perche' ognuno guarda la sua riga
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
-  printf(" *** [%d] %.2f (%d,%d)\n ", rank, min, rank, indexC); // print test
+  printf(" *** [%d] %.1f (%d,%d)\n ", rank, min, indexR, indexC); // print test
   
   /* FINE ALGORITMO */
   
   float sendMin = min;
   int sendIndexR = indexR;
+  //int sendIndexR = rank;
   int sendIndexC = indexC;
    
   float sendMinArray[n+1];
@@ -288,19 +309,19 @@ int main(int argc, char *argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   
   MPI_Send(&sendMin, count, MPI_FLOAT, root, 0, MPI_COMM_WORLD);
-  //printf(" >>> [%d] sendMin: %.2f\n", rank, sendMin);
+  //printf(" >>> [%d] sendMin: %.1f\n", rank, sendMin);
   if(rank == root) {
       while(array[g] != -1) {
          MPI_Recv(&sendMin, 1, MPI_FLOAT, array[g], 0, MPI_COMM_WORLD, &status);
          sendMinArray[h] = sendMin;         
-         //printf(" <<<<< [%d] sendMin: %.2f, from: %d\n", rank, sendMin, array[g]);
+         //printf(" <<<<< [%d] sendMin: %.1f, from: %d\n", rank, sendMin, array[g]);
          g++;
          h++;
       }
       
       printf("[%d] sendMinArray: ", rank);
       for(i = 0; i < n; i++) {
-         printf("%.2f ", sendMinArray[i]);
+         printf("%.1f ", sendMinArray[i]);
       }
       printf("\n");
       
@@ -362,7 +383,7 @@ int main(int argc, char *argv[]) {
   int y, t;
   int controlB;
   controlB = 0;
-  float max = 0;
+  float max = 0.2;
 
    for (y = 0; y < n; y++) {
       if (sendMinArray[y] > max) {
@@ -394,7 +415,7 @@ int main(int argc, char *argv[]) {
             kmin = k;
          }
       }
-   controlB=0;
+      controlB = 0;
   }
   
   if(kmin != -1) {
@@ -402,28 +423,31 @@ int main(int argc, char *argv[]) {
       indexC = sendIndexCArray[kmin];
   }
   
-  mr[indexR][indexC] = max;
-  mr[indexC][indexR] = mr[indexR][indexC];
+  if(max != 0.2) {
+      mr[indexR][indexC] = max;
+      mr[indexC][indexR] = mr[indexR][indexC];
+  }
   
   //if(rank == root) {
-  //    printf(" ----- [%d] sendMin: %.2f, sendIndexR: %d, sendIndexC: %d\n", rank, sendMin, sendIndexR, sendIndexC);
+      printf(" ----- [%d] sendMin: %.1f, sendIndexR: %d, sendIndexC: %d\n", rank, sendMin, sendIndexR, sendIndexC);
+      printf("ggggg [%d] max: %.1f , indexR: %d , indexC: %d\n" , rank, max, indexR, indexC);
   //}
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
   // root print test
-      if (rank == root) {
+      if (rank == 0) { //if (rank == root) {
          printf(" ROOT *** MATRICE RISULTATO [%d] ***\n", rank);
             for(i = 0; i < n; i++) {
 	     	      for(j = 0; j < n; j++) {
-	     		      printf("%.2f ", mr[i][j]);
+	     		      printf("%.1f ", mr[i][j]);
 	            }
 	            printf("\n");
             }
       }
   
-  // broadcast a tutti della matrice risultato aggiornata
+  /* BROADCAST a tutti della matrice risultato aggiornata */
   
   /* SYNC */
   //MPI_Barrier(MPI_COMM_WORLD);  
@@ -433,15 +457,19 @@ int main(int argc, char *argv[]) {
       buffer = mr[indexR][indexC];
       col = indexC;
       row = indexR;
+      
+      if(buffer != 0.2) {
   
-      MPI_Bcast(&buffer, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);  
-      MPI_Bcast(&col, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
-      MPI_Bcast(&row, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+         MPI_Bcast(&buffer, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);  
+         MPI_Bcast(&col, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+         MPI_Bcast(&row, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+     
+         mr[row][col] = buffer;
+         mr[col][row] = mr[row][col];
+      
+      }
   
-      mr[row][col] = buffer;
-      mr[col][row] = mr[row][col];
-  
-      //printf("=== Buffer [%d]: %.2f\n", rank, buffer);
+      //printf("=== Buffer [%d]: %.1f\n", rank, buffer);
   
       /* SYNC */
       MPI_Barrier(MPI_COMM_WORLD);
@@ -450,11 +478,28 @@ int main(int argc, char *argv[]) {
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
-  if (rank == 1) {
+  if (rank == 0) {
       printf(" UPDATE *** MATRICE RISULTATO [%d] ***\n", rank);
          for(i = 0; i < n; i++) {
 	  	      for(j = 0; j < n; j++) {
-	  		      printf("%.2f ", mr[i][j]);
+	  		      printf("%.1f ", mr[i][j]);
+	         }
+	         printf("\n");
+	      }
+  }
+  
+} // chiude il while gigante
+
+  printf("!!!!! [%d] QUIT\n", rank);
+
+  /* SYNC */
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+      printf(" END *** MATRICE RISULTATO [%d] ***\n", rank);
+         for(i = 0; i < n; i++) {
+	  	      for(j = 0; j < n; j++) {
+	  		      printf("%.1f ", mr[i][j]);
 	         }
 	         printf("\n");
 	      }
