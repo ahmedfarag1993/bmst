@@ -6,12 +6,17 @@ int main(int argc, char *argv[]) {
 
 /* LEGGE E MEMORIZZA IL FILE CON IL GRAFO SU UNA MATRICE */
 
+  //printf("argv[1]: %s\n" , argv[1]);
+  //printf("argv[2]: %s\n" , argv[2]);
+
   FILE *file;
   int n = 12;
+  //int n = (int)argv[1];
   float matrix[n][n]; // matrice input
   float mr[n][n]; // matrice risultato
 
   file = fopen("./graph-gen/graph3.txt", "r"); // apre il file
+  //file = fopen("argv[2]", "r"); // apre il file
   if (file == NULL) {
       perror("Errore in apertura del file");
       exit(1);
