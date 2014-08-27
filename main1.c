@@ -357,7 +357,7 @@ for(i = 0; i < ratio; i++) {
 for(i = 0; i < ratio; i++) {
   
   for(k = 0; k < ratio; k++) {
-      if(root[i] == array[k][0]) {
+      if(root[i] == array[k][0]) { // se io gestisco la root, non serve inviare
          controlA = 1;
          sendMinArray[i][h] = sendMin[i];
          sendIndexRArray[i][h] = sendIndexR[i];
@@ -374,51 +374,68 @@ for(i = 0; i < ratio; i++) {
   int rankSender[n]; // contiene i processori che gestiscono tali nodi
   int nodeAux[n]; // contiene i nodi gestiti
   int rootAux[n]; // contiene le radici dei nodi gestiti
+  int m;
   
-  
-  for(k = 0; k < ratio; k++) { // copio root in myroot
+  for(k = 0; k < ratio; k++) { // copio root in myNodesRoot e i nodi gestiti in myNodes
       myNodes[k] = k*size+rank;
       myNodesRoot[k] = root[k];
   }
   
-  for(rankBcast = 0; rankBcast < size; rankBcast++) {
+  printf(" $$$$$ [%d][%d] root[i]: %d\n", rank, i, root[i]);
+  
+  printf(" === [%d] myRank: %d\n" , rank, myRank);
+  for(k = 0; k < ratio; k++) {
+      printf(" ^^^ [%d][%d] myNodes: %d, myNodesRoot: %d\n", rank, k, myNodes[k], myNodesRoot[k]);
+  }
+  
+  
+  //for(rankBcast = 0; rankBcast < size; rankBcast++) {
+   m = 0;
       for(k = 0; k < ratio; k++) {
-         MPI_Bcast(&myRank, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);
-         MPI_Bcast(&myNodes[k], count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);
-         MPI_Bcast(&myNodesRoot[k], count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);
+         MPI_Bcast(&myRank, count, MPI_INT, rank, MPI_COMM_WORLD);
+         MPI_Bcast(&myNodes[k], count, MPI_INT, rank, MPI_COMM_WORLD);
+         MPI_Bcast(&myNodesRoot[k], count, MPI_INT, rank, MPI_COMM_WORLD);
          
-         rankSender[k] = myRank;
-         nodeAux[k] = myNodes[k];
-         rootAux[k] = myNodesRoot[k];
+         rankSender[m] = myRank;
+         nodeAux[m] = myNodes[k];
+         rootAux[m] = myNodesRoot[k];
+         m++;
       }
+  //}
+  
+  for(k = 0; k < n; k++) {
+      printf("[%d][%d] rankSender: %d , nodeAux: %d, rootAux: %d\n", rank, k, rankSender[k], nodeAux[k], rootAux[k]);
   }
          
   if(controlA == 0) { // se non ho la root tra le root dei miei nodi, devo andarla a cercare da qualcun altro
-  
-     for(k = 0; k < n; k++) {
-         if(rootAux[k] == root[i]) { 
+    //for(i = 0; i < ratio; i++) {
+     for(k = 0; k < ratio; k++) {
+         if(nodeAux[k] == root[i]) { 
   
               MPI_Send(&sendMin[i], count, MPI_FLOAT, rankSender[k], 0, MPI_COMM_WORLD);
               
-              if(rootAux[k] == root[i] && rankSender[k] != rank) {
+              if(nodeAux[k] == root[i] && rankSender[k] != rank) {
+              //if(nodeAux[i] == root[k] && rankSender[i] != rank) {
                   while(array[i][g] != -1) {
                      MPI_Recv(&sendMin[i], 1, MPI_FLOAT, rankSender[k], 0, MPI_COMM_WORLD, &status);
                      sendMinArray[i][h] = sendMin[i];
                      g++;
                      h++;
                   }         
-              }
-     
+              }     
          }
-      }  
+     }  
   
       printf("[%d][%d] sendMinArray: ", rank, i*size+rank);
       for(j = 0; j < n; j++) {
          printf("%.1f ", sendMinArray[i][j]);
       }
       printf("\n");
+     //}
+     
+} // chiude il controlA
   
-  /* SYNC */
+ /*
   MPI_Barrier(MPI_COMM_WORLD);
   
   g = 0;
@@ -440,7 +457,6 @@ for(i = 0; i < ratio; i++) {
       
   }
   
-  /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
   
   g = 0;
@@ -460,13 +476,13 @@ for(i = 0; i < ratio; i++) {
       }
       printf("\n");
       
-  }
+  } */
   
  } // chiude il controllo
  
  controlA = 0;
  
-} // chiude for ratio
+//} // chiude for ratio
   
   /* SYNC */
   MPI_Barrier(MPI_COMM_WORLD);
