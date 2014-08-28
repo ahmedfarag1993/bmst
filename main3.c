@@ -371,10 +371,14 @@ int main(int argc, char *argv[]) {
         for(k = 0; k < ratio; k++) { // se io gestisco la root, non serve inviare; scrivo direttamente nei miei sendArray
             if(root[i] == array[k][0]) {
                 controlA = 1;
-                sendMinArray[k][h] = sendMin[i];
-                sendIndexRArray[k][h] = sendIndexR[i];
-                sendIndexCArray[k][h] = sendIndexC[i];
-                h++;
+                for(h = 0; h < n; h++) {
+                    if(sendMinArray[k][h] == -1) {
+                        sendMinArray[k][h] = sendMin[i];
+                        sendIndexRArray[k][h] = sendIndexR[i];
+                        sendIndexCArray[k][h] = sendIndexC[i];
+                        break;
+                    }
+                }
             }
         }
 
@@ -421,19 +425,21 @@ int main(int argc, char *argv[]) {
             myNodesRoot[g] = root[g];
         }
 
-            for(k = 0; k < ratio; k++) {
-                printf(" ^^^ [%d][%d] myRank: %d, myNodes: %d, myNodesRoot: %d\n", rank, k, myRank[k], myNodes[k], myNodesRoot[k]);
-            }
+        for(k = 0; k < ratio; k++) {
+            printf(" ^^^ [%d][%d] myRank: %d, myNodes: %d, myNodesRoot: %d\n", rank, k, myRank[k], myNodes[k], myNodesRoot[k]);
+        }
 
-            for(k = 0; k < len; k++) {
-                printf("[%d][%d] otherRank: %d , otherNodes: %d, otherNodesRoot: %d\n", rank, k, otherRank[k], otherNodes[k], otherNodesRoot[k]);
-            }
+        for(k = 0; k < len; k++) {
+            printf("[%d][%d] otherRank: %d , otherNodes: %d, otherNodesRoot: %d\n", rank, k, otherRank[k], otherNodes[k], otherNodesRoot[k]);
+        }
 
         MPI_Barrier(MPI_COMM_WORLD); // a questo punto, tutti i processori conoscono tutte le info di tutti
 
         int toSend = -1; // rank del destinatario
         int recFrom = -1; // rank del mittente
-        float recBuf; // buffer per la ricezione
+        float recBufMin; // buffer per la ricezione minimo
+        int recBufIndexR; // buffer per la ricezione indice di riga
+        int recBufIndexC; // buffer per la ricezione indice di colonna
 
         // questo passo lo devo fare se non trovo la root dentro myNodes
         if(controlA == 0) {
@@ -446,6 +452,12 @@ int main(int argc, char *argv[]) {
             if(toSend != -1) {
                 MPI_Send(&sendMin[i], count, MPI_FLOAT, toSend, 0, MPI_COMM_WORLD);
                 printf(">>> Io %d ho inviato %.1f a %d\n", rank, sendMin[i], toSend);
+                
+                MPI_Send(&sendIndexR[i], count, MPI_INT, toSend, 0, MPI_COMM_WORLD);
+                //printf(">>> Io %d ho inviato %.1f a %d\n", rank, sendMin[i], toSend);
+                
+                MPI_Send(&sendIndexC[i], count, MPI_INT, toSend, 0, MPI_COMM_WORLD);
+                //printf(">>> Io %d ho inviato %.1f a %d\n", rank, sendMin[i], toSend);
                 toSend = -1;
             }
         }
@@ -461,8 +473,26 @@ int main(int argc, char *argv[]) {
         }
 
         if(recFrom != -1) {
-            MPI_Recv(&recBuf, 1, MPI_FLOAT, recFrom, 0, MPI_COMM_WORLD, &status);
-            printf("<<< Io %d ho ricevuto %.1f da %d\n", rank, recBuf, recFrom);
+            MPI_Recv(&recBufMin, 1, MPI_FLOAT, recFrom, 0, MPI_COMM_WORLD, &status);
+            printf("<<< Io %d ho ricevuto %.1f da %d\n", rank, recBufMin, recFrom);
+            
+            MPI_Recv(&recBufIndexR, 1, MPI_INT, recFrom, 0, MPI_COMM_WORLD, &status);
+            
+            MPI_Recv(&recBufIndexC, 1, MPI_INT, recFrom, 0, MPI_COMM_WORLD, &status);
+            
+            for(k = 0; k < ratio; k++) {
+                if(root[i] == array[k][0]) {
+                    for(h = 0; h < n; h++) {
+                        if(sendMinArray[k][h] == -1) {
+                            sendMinArray[k][h] = recBufMin;
+                            sendIndexRArray[k][h] = recBufIndexR;
+                            sendIndexCArray[k][h] = recBufIndexC;
+                            break;
+                        }
+                    }
+                }
+            }
+            
             recFrom = -1;
         }
 
@@ -470,7 +500,158 @@ int main(int argc, char *argv[]) {
 
 
     } // chiude il for
+    
+    for(g = 0; g < ratio; g++) {
+        printf("[%d][%d] sendMinArray: ", rank, g*size+rank);
+        for(j = 0; j < n; j++) {
+            printf("%.1f ", sendMinArray[g][j]);
+        }
+        printf("\n");
+    }
+    
+    for(g = 0; g < ratio; g++) {
+        printf("[%d][%d] sendIndexRArray: ", rank, g*size+rank);
+        for(j = 0; j < n; j++) {
+            printf("%d ", sendIndexRArray[g][j]);
+        }
+        printf("\n");
+    }
+    
+    for(g = 0; g < ratio; g++) {
+        printf("[%d][%d] sendIndexCArray: ", rank, g*size+rank);
+        for(j = 0; j < n; j++) {
+            printf("%d ", sendIndexCArray[g][j]);
+        }
+        printf("\n");
+    }
+    
+    /* SYNC */
+    MPI_Barrier(MPI_COMM_WORLD);
 
+    k = 0;
+
+    int kmin = -1;
+    int y, t;
+    int controlB = 0;
+    float max;
+
+    for(i = 0; i < ratio; i++) {
+
+        max = sendMinArray[i][0];
+
+        for (y = 0; y < n; y++) {
+            if (sendMinArray[i][y] > max) {
+                for (t = 0; t < n; t++) { //di questo max controlla che il sendIndexCArray non appartenga al suo supernodo
+                    if (sendIndexCArray[i][y] == array[i][t]) {
+                        controlB = 1; //se è del suo supernodo
+                    }
+                }
+                if (controlB == 0) {
+                    max = sendMinArray[i][y];
+                    indexR[i] = sendIndexRArray[i][y];
+                    indexC[i] = sendIndexCArray[i][y];
+                }
+            }
+            controlB = 0;
+        }
+
+        controlB = 0;
+
+        for(k = 1; k < n; k++) {
+            if(sendMinArray[i][k] < max) {
+                for (t = 0; t < n; t++) { //di questo controlla che non appartenga al suo supernodo
+                    if (sendIndexCArray[i][k] == array[i][t]) {
+                        controlB = 1; //se è del suo supernodo
+                    }
+                }
+                if (controlB == 0) {
+                    max = sendMinArray[i][k]; //se non è del suo supernodo ok mi va bene
+                    kmin = k;
+                }
+            }
+            controlB = 0;
+        }
+
+        if(kmin != -1) {
+            indexR[i] = sendIndexRArray[i][kmin];
+            indexC[i] = sendIndexCArray[i][kmin];
+        }
+
+        if(max != sendMinArray[i][0]) {
+            mr[indexR[i]][indexC[i]] = max;
+            mr[indexC[i]][indexR[i]] = mr[indexR[i]][indexC[i]];
+        }
+
+        //if(rank == root) {
+        printf(" ----- [%d] sendMin[i]: %.1f, sendIndexR[i]: %d, sendIndexC[i]: %d\n", rank, sendMin[i], sendIndexR[i], sendIndexC[i]);
+        printf("ggggg [%d] max: %.1f , indexR: %d , indexC: %d\n" , rank, max, indexR[i], indexC[i]);
+        //}
+
+        /* SYNC */
+        MPI_Barrier(MPI_COMM_WORLD);
+
+    } // chiude il for
+    
+    // root print test
+    if (rank == 0) { //if (rank == root) {
+        printf(" ROOT *** MATRICE RISULTATO [%d] ***\n", rank);
+        for(i = 0; i < n; i++) {
+            for(j = 0; j < n; j++) {
+                printf("%.1f ", mr[i][j]);
+            }
+            printf("\n");
+        }
+    }
+
+    if (rank == 1) { //if (rank == root) {
+        printf(" ROOT *** MATRICE RISULTATO [%d] ***\n", rank);
+        for(i = 0; i < n; i++) {
+            for(j = 0; j < n; j++) {
+                printf("%.1f ", mr[i][j]);
+            }
+            printf("\n");
+        }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    /* BROADCAST a tutti della matrice risultato aggiornata */
+
+    for(rankBcast = 0; rankBcast < size; rankBcast++) {
+
+        for(i = 0; i < ratio; i++) {
+
+            buffer = mr[indexR[i]][indexC[i]];
+            col = indexC[i];
+            row = indexR[i];
+
+            MPI_Bcast(&buffer, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);
+            MPI_Bcast(&col, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+            MPI_Bcast(&row, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+
+            mr[row][col] = buffer;
+            mr[col][row] = mr[row][col];
+
+        }
+
+        //printf("=== Buffer [%d]: %.1f\n", rank, buffer);
+
+        /* SYNC */
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    /* SYNC */
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    printf(" UPDATE *** MATRICE RISULTATO [%d] ***\n", rank);
+    for(i = 0; i < n; i++) {
+        for(j = 0; j < n; j++) {
+            printf("%.1f ", mr[i][j]);
+        }
+        printf("\n");
+    }
+
+    /* SYNC */
     MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Finalize();
