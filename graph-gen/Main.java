@@ -1,5 +1,4 @@
 
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -12,7 +11,7 @@ public class Main {
 	public static void main(String[] args) {
 		int numVert, n;
 		double[][] adjMatrix;
-		
+
 		Scanner in = new Scanner(System.in);
 		Random rand = new Random();
 
@@ -31,27 +30,34 @@ public class Main {
 		// +++ MATRIX CREATION [ADJ -> SYMMETRIC] +++
 
 		adjMatrix = new double[numVert][numVert];
-		
+
 		// fill the top-right corner of the matrix
 		// with random weights
+
+		int r;
 
 		for (int i = 0; i < numVert; i++) {
 			for (int j = i; j < numVert; j++) {
 				if (i != j) {
-					// random weight
-					adjMatrix[i][j] = rand.nextDouble() * 10;
-					n = (int) (adjMatrix[i][j] * 100);
-					adjMatrix[i][j] = (double) n / 100;
+					r = rand.nextInt(2);
+					if (r == 0) {
+						adjMatrix[i][j] = 0;
+					} else {
+						// random weight
+						adjMatrix[i][j] = rand.nextDouble() * 10;
+						n = (int) (adjMatrix[i][j] * 100);
+						adjMatrix[i][j] = (double) n / 100;
+					}
 				} else
 					adjMatrix[i][j] = 0; // null weight on diagonal
 			}
 		}
-		
+
 		// copying the top-right corner into the bottom-left corner
-		
+
 		for (int j = 0; j < numVert; j++)
 			for (int i = j; i < numVert; i++)
-					adjMatrix[i][j] = adjMatrix[j][i];
+				adjMatrix[i][j] = adjMatrix[j][i];
 
 		// --- END OF MATRIX CREATION ---
 
