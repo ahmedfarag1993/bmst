@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    for(;;) { // ATTENZIONE!
+    for(;;) { // ATTENZIONE! ==========================================
 
         counter = 0;
 
@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
         /* FINE CREAZIONE SUPERNODO */
 
         /* CREAZIONE DELLE ROOT E ALGORITMO PER TROVARE IL MIN */
-        // ogni supernodo elegge un rappresentante (root), al quale ogni nodo invia il suo valore min
+        // ogni supernodo elegge un rappresentante (root), al quale ogni nodo invia il proprio valore min
 
         int g;
         int root[ratio];
@@ -283,8 +283,29 @@ int main(int argc, char *argv[]) {
             printf("[%d][%d] root: %d\n", rank, i*size+rank, root[i]);
         }
 
+        for(i = 0; i < ratio; i++) { // inizializzo min, indexR, indexC ai valori iniziali
 
-        for(i = 0; i < ratio; i++) {
+            for (k = 0; k < n; k++) {
+                if (matrix[i*size + rank][k] != 0) {
+                    min[i] = matrix[i*size + rank][k];
+                    indexR[i] = i*size + rank; // salvo riga
+                    indexC[i] = k; // salvo colonna
+                    break;
+                }
+            }
+
+            for (k = 0; k < n; k++) {
+                if (matrix[i*size + rank][k] < min[i] && matrix[i*size + rank][k] != 0) {
+                    min[i] = matrix[i*size + rank][k];  // salvo valore
+                    indexR[i] = i*size + rank; // salvo riga
+                    indexC[i] = k; // salvo colonna
+                }
+            }
+        }
+
+        for(i = 0; i < ratio; i++) { // eseguo il ciclo per ogni array che gestisco
+
+            controlA = 0;
 
             for (k = 0; k < n; k++) {
                 for (g = 0; g < n; g++) {
@@ -319,9 +340,10 @@ int main(int argc, char *argv[]) {
                 controlA = 0;
             }
 
-            //mr[indexR][indexC] = min; //aggiorno la matrice risultato
             indexR[i] = i*size+rank; // perche' ognuno guarda la sua riga
+
         }
+
         /* SYNC */
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -371,6 +393,8 @@ int main(int argc, char *argv[]) {
         int otherNodesRoot[len]; // contiene le radici dei nodi gestiti
         int m, q, dest;
 
+        int recCounter = -1; // contatore di quante volte devo ricevere
+
         for(i = 0; i < ratio; i++) { // per ogni processore, fisso la root e vado alla ricerca del processore che la contiene
 
             controlA = 0;
@@ -389,7 +413,7 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            // =================================================================================
+            // ---------------------------------------------------
 
             for(k = 0; k < ratio; k++) { // copio le root in myNodesRoot e i nodi gestiti in myNodes
                 myRank[k] = rank;
@@ -432,14 +456,14 @@ int main(int argc, char *argv[]) {
                 myNodesRoot[g] = root[g];
             }
 
-            if(i == ratio - 1) {
+            if(i == 0) {
 
                 for(k = 0; k < ratio; k++) {
                     printf(" ^^^ [%d][%d] myRank: %d, myNodes: %d, myNodesRoot: %d\n", rank, k, myRank[k], myNodes[k], myNodesRoot[k]);
                 }
 
-                for(k = 0; k < len; k++) {
-                    printf("[%d][%d] otherRank: %d , otherNodes: %d, otherNodesRoot: %d\n", rank, k, otherRank[k], otherNodes[k], otherNodesRoot[k]);
+                for(k = 0; k < len; k++) { // O_o
+                    printf(" @@@ [%d][%d] otherRank: %d , otherNodes: %d, otherNodesRoot: %d\n", rank, k, otherRank[k], otherNodes[k], otherNodesRoot[k]);
                 }
             }
 
@@ -451,6 +475,27 @@ int main(int argc, char *argv[]) {
             int recBufIndexR; // buffer per la ricezione indice di riga
             int recBufIndexC; // buffer per la ricezione indice di colonna
 
+//            MPI_Request request;
+
+//            int flag = -1; // PERICOLO!!!
+
+            // inizializzazione recCounter
+            if(recCounter == -1) {
+                recCounter = 0;
+                for(m = 0; m < len; m++) {
+                    for(k = 0; k < ratio; k++) {
+                        if(otherNodesRoot[m] == myNodes[k]) {
+                            recCounter++;
+                        }
+                    }
+                }
+            }
+
+            printf("[%d] recCounter: %d\n", rank, recCounter); // quante volte devo ricevere
+
+            /* SYNC */
+            MPI_Barrier(MPI_COMM_WORLD);
+
             // questo passo lo devo fare se non trovo la root dentro myNodes
             if(controlA == 0) {
                 for(m = 0; m < len; m++) {
@@ -460,6 +505,11 @@ int main(int argc, char *argv[]) {
                 }
 
                 if(toSend != -1) {
+//                    if(flag == -1 || flag == -2) {
+//                        flag = toSend;
+//                        MPI_Bcast(&flag, count, MPI_INT, rank, MPI_COMM_WORLD);
+//                    }
+
                     MPI_Send(&sendMin[i], count, MPI_FLOAT, toSend, 0, MPI_COMM_WORLD);
                     printf(">>> Io %d ho inviato %.2f a %d\n", rank, sendMin[i], toSend);
 
@@ -468,6 +518,8 @@ int main(int argc, char *argv[]) {
 
                     MPI_Send(&sendIndexC[i], count, MPI_INT, toSend, 0, MPI_COMM_WORLD);
                     //printf(">>> Io %d ho inviato %.2f a %d\n", rank, sendMin[i], toSend);
+
+                    //MPI_Wait(&request, &status);
                     toSend = -1;
                 }
             }
@@ -482,13 +534,22 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            if(recFrom != -1) {
+            /* SYNC */
+            MPI_Barrier(MPI_COMM_WORLD);
+
+            //if(recFrom != -1 && rank == flag) {
+            if(recFrom != -1 && recCounter > 0) {
+
+                recCounter--;
+
                 MPI_Recv(&recBufMin, 1, MPI_FLOAT, recFrom, 0, MPI_COMM_WORLD, &status);
                 printf("<<< Io %d ho ricevuto %.2f da %d\n", rank, recBufMin, recFrom);
 
                 MPI_Recv(&recBufIndexR, 1, MPI_INT, recFrom, 0, MPI_COMM_WORLD, &status);
 
                 MPI_Recv(&recBufIndexC, 1, MPI_INT, recFrom, 0, MPI_COMM_WORLD, &status);
+
+                //MPI_Wait(&request, &status);
 
                 for(k = 0; k < ratio; k++) {
                     if(root[i] == array[k][0]) {
@@ -504,10 +565,13 @@ int main(int argc, char *argv[]) {
                 }
 
                 recFrom = -1;
+
+//                flag = -2;
+//                MPI_Bcast(&flag, count, MPI_INT, rank, MPI_COMM_WORLD);
             }
 
-            // DOBBIAMO INVIARE INDEXR ED INDEXC ED AGGIORNARE I SENDARRAY
-
+            /* SYNC */
+            MPI_Barrier(MPI_COMM_WORLD);
 
         } // chiude il for
 
@@ -537,6 +601,8 @@ int main(int argc, char *argv[]) {
 
         /* SYNC */
         MPI_Barrier(MPI_COMM_WORLD);
+
+        /* SCELTA DEL MINIMO DEI MINIMI */
 
         k = 0;
 
@@ -593,7 +659,7 @@ int main(int argc, char *argv[]) {
             }
 
             //if(rank == root) {
-            printf(" ----- [%d] sendMin[i]: %.2f, sendIndexR[i]: %d, sendIndexC[i]: %d\n", rank, sendMin[i], sendIndexR[i], sendIndexC[i]);
+            printf("zzzzz [%d] sendMin[i]: %.2f, sendIndexR[i]: %d, sendIndexC[i]: %d\n", rank, sendMin[i], sendIndexR[i], sendIndexC[i]);
             printf("ggggg [%d] max: %.2f , indexR: %d , indexC: %d\n" , rank, max, indexR[i], indexC[i]);
             //}
 
@@ -623,6 +689,9 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        /* FINE SCELTA DEL MINIMO DEI MINIMI */
+
+        /* SYNC */
         MPI_Barrier(MPI_COMM_WORLD);
 
         /* BROADCAST a tutti della matrice risultato aggiornata */
@@ -650,6 +719,8 @@ int main(int argc, char *argv[]) {
             MPI_Barrier(MPI_COMM_WORLD);
         }
 
+        /* FINE BROADCAST */
+
         /* SYNC */
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -661,7 +732,7 @@ int main(int argc, char *argv[]) {
             printf("\n");
         }
 
-    }
+    } // chiude il ciclo infinito =====================================
 
     printf("!!!!! [%d] QUIT\n", rank);
 
