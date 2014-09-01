@@ -553,7 +553,15 @@ int main(int argc, char *argv[]) {
 
                 MPI_Recv(&recBufIndexC, 1, MPI_INT, recFrom[t], 0, MPI_COMM_WORLD, &status);
 
-                k = (recBufIndexR - rank) / size;
+                k = myNodesRoot[(recBufIndexR - rank) / size]; // riga indexR !!!!!
+
+                for(q = 0; q < ratio; q++) {
+                    if(myNodes[q] == k) {
+                        k = q;
+                        break;
+                    }
+                }
+
                 for(h = 0; h < n; h++) {
                     if(sendMinArray[k][h] == -1) {
                         sendMinArray[k][h] = recBufMin;
@@ -601,9 +609,15 @@ int main(int argc, char *argv[]) {
         k = 0;
 
         int kmin = -1;
-        int y;
+        int v, y;
         int controlB = 0;
         float max;
+
+//        for(j = 0; j < ratio; j++) { // PROVA DI INIZIALIZZAZIONE
+//            indexR[j] = -1;
+//            indexC[j] = -1;
+//            min[j] = -1;
+//        }
 
         for(i = 0; i < ratio; i++) {
 
@@ -642,17 +656,32 @@ int main(int argc, char *argv[]) {
                 controlB = 0;
             }
 
-            if(kmin != -1) {
+            //if(kmin != -1) {
+            if(kmin > -1) {
                 indexR[i] = sendIndexRArray[i][kmin];
                 indexC[i] = sendIndexCArray[i][kmin];
             }
 
-            if(max != sendMinArray[i][0]) { // <---- IL SEGFAULT E' QUI !!!!!!!!!!
-                mr[indexR[i]][indexC[i]] = max;
+                // DEBUG PRINT
+//                if(rank == 0) {
+//                    for(v = 0; v < ratio; v++) {
+//                        printf("[%d] indexR[%d]: %d , indexC[%d]: %d\n", rank, v, indexR[v], v, indexC[v]);
+//                    }
+//                }
+
+            //if(max != sendMinArray[i][0]) {
+            if(max != sendMinArray[i][0]) {
+//                if(rank == 0) {
+//                    printf("[%d] SONO ENTRATO! i: %d\n", rank, i);
+//                }
+                mr[indexR[i]][indexC[i]] = max; // <---- IL SEGFAULT E' QUI !!!!!!!!!!
                 mr[indexC[i]][indexR[i]] = mr[indexR[i]][indexC[i]];
+
             }
 
-            printf("[%d] SONO ARRIVATO FIN QUI?? i: %d\n", rank, i);
+//            if(rank == 0) {
+//                printf("[%d] SONO ARRIVATO FIN QUI?? i: %d\n", rank, i);
+//            }
 
             printf("zzzzz [%d] sendMin[i]: %.2f, sendIndexR[i]: %d, sendIndexC[i]: %d\n", rank, sendMin[i], sendIndexR[i], sendIndexC[i]);
             printf("ggggg [%d] max: %.2f , indexR: %d , indexC: %d\n" , rank, max, indexR[i], indexC[i]);
@@ -706,12 +735,14 @@ int main(int argc, char *argv[]) {
         /* SYNC */
         MPI_Barrier(MPI_COMM_WORLD);
 
-        printf(" UPDATE *** MATRICE RISULTATO [%d] ***\n", rank);
-        for(i = 0; i < n; i++) {
-            for(j = 0; j < n; j++) {
-                printf("%.2f ", mr[i][j]);
+        if(rank == 1) {
+            printf(" UPDATE *** MATRICE RISULTATO [%d] ***\n", rank);
+            for(i = 0; i < n; i++) {
+                for(j = 0; j < n; j++) {
+                    printf("%.2f ", mr[i][j]);
+                }
+                printf("\n");
             }
-            printf("\n");
         }
 
         /* SYNC */
