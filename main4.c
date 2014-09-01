@@ -10,12 +10,12 @@ int main(int argc, char *argv[]) {
     //printf("argv[2]: %s\n" , argv[2]);
 
     FILE *file;
-    int n = 12;
+    int n = 8;
     //int n = (int)argv[1];
     float matrix[n][n]; // matrice input
     float mr[n][n]; // matrice risultato
 
-    file = fopen("./graph-gen/graph3.txt", "r"); // apre il file
+    file = fopen("./graph-gen/graph4.txt", "r"); // apre il file
     //file = fopen("argv[2]", "r"); // apre il file
     if (file == NULL) {
         perror("Errore in apertura del file");
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
 
     int rankBcast;
 
-    for(rankBcast = 0; rankBcast < size; rankBcast++) {
+    for(rankBcast = 0; rankBcast < size; rankBcast++) { // DA SISTEMARE
 
         for(i = 0; i < ratio; i++) {
 
@@ -553,12 +553,11 @@ int main(int argc, char *argv[]) {
 
                 MPI_Recv(&recBufIndexC, 1, MPI_INT, recFrom[t], 0, MPI_COMM_WORLD, &status);
 
-                k = myNodesRoot[(recBufIndexR - rank) / size]; // riga indexR !!!!!
+                //k = myNodesRoot[(recBufIndexR - rank) / size]; // riga indexR !!!!!
 
                 for(q = 0; q < ratio; q++) {
-                    if(myNodes[q] == k) {
+                    if(myNodes[q] == otherNodesRoot[t]) {
                         k = q;
-                        break;
                     }
                 }
 
@@ -612,12 +611,7 @@ int main(int argc, char *argv[]) {
         int v, y;
         int controlB = 0;
         float max;
-
-//        for(j = 0; j < ratio; j++) { // PROVA DI INIZIALIZZAZIONE
-//            indexR[j] = -1;
-//            indexC[j] = -1;
-//            min[j] = -1;
-//        }
+        float maxArray[ratio];
 
         for(i = 0; i < ratio; i++) {
 
@@ -675,9 +669,12 @@ int main(int argc, char *argv[]) {
 //                    printf("[%d] SONO ENTRATO! i: %d\n", rank, i);
 //                }
                 mr[indexR[i]][indexC[i]] = max; // <---- IL SEGFAULT E' QUI !!!!!!!!!!
-                mr[indexC[i]][indexR[i]] = mr[indexR[i]][indexC[i]];
+                //mr[indexC[i]][indexR[i]] = mr[indexR[i]][indexC[i]];
+                mr[indexC[i]][indexR[i]] = max;
 
             }
+
+            maxArray[i] = max;
 
 //            if(rank == 0) {
 //                printf("[%d] SONO ARRIVATO FIN QUI?? i: %d\n", rank, i);
@@ -691,8 +688,12 @@ int main(int argc, char *argv[]) {
 
         } // chiude il "for i ratio"
 
+        for(i = 0; i < ratio; i++) {
+            printf("[%d] maxArray[%d]: %.2f\n", rank, i, maxArray[i]);
+        }
+
         // root print test
-        if (rank == 0) {
+        if (rank == 1) {
             printf(" *** MATRICE RISULTATO [%d] ***\n", rank);
             for(i = 0; i < n; i++) {
                 for(j = 0; j < n; j++) {
@@ -709,25 +710,31 @@ int main(int argc, char *argv[]) {
 
         /* BROADCAST a tutti della matrice risultato aggiornata */
 
-        for(rankBcast = 0; rankBcast < size; rankBcast++) {
+        float allMax[n];
+        int allIndexR[n];
+        int allIndexC[n];
 
-            for(i = 0; i < ratio; i++) {
+        q = 0;
 
-                buffer = mr[indexR[i]][indexC[i]];
-                col = indexC[i];
-                row = indexR[i];
+        for(k = 0; k < ratio; k++) { // faccio sapere a tutti i nodi di tutti
 
-                MPI_Bcast(&buffer, count, MPI_FLOAT, rankBcast, MPI_COMM_WORLD);
-                MPI_Bcast(&col, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
-                MPI_Bcast(&row, count, MPI_INT, rankBcast, MPI_COMM_WORLD);
+            MPI_Allgather(&maxArray[k], 1, MPI_FLOAT, &allMax[q], 1, MPI_FLOAT, MPI_COMM_WORLD);
+            MPI_Allgather(&indexR[k], 1, MPI_INT, &allIndexR[q], 1, MPI_INT, MPI_COMM_WORLD);
+            MPI_Allgather(&indexC[k], 1, MPI_INT, &allIndexC[q], 1, MPI_INT, MPI_COMM_WORLD);
 
-                mr[row][col] = buffer;
-                mr[col][row] = mr[row][col];
+            q = q + size;
 
+        }
+
+        for(k = 0; k < n; k++) { // per un processore non li stampa
+            printf(" @@@ [%d][%d] allMax: %.2f , allIndexR: %d, allIndexC: %d\n", rank, k, allMax[k], allIndexR[k], allIndexC[k]);
+        }
+
+        for(k = 0; k < n; k++) {
+            if(allMax[k] != -1) {
+                mr[allIndexR[k]][allIndexC[k]] = allMax[k];
+                mr[allIndexC[k]][allIndexR[k]] = mr[allIndexR[k]][allIndexC[k]];
             }
-
-            /* SYNC */
-            MPI_Barrier(MPI_COMM_WORLD);
         }
 
         /* FINE BROADCAST */
