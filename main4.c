@@ -149,6 +149,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /* SYNC */
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == 1) {
@@ -255,6 +256,9 @@ int main(int argc, char *argv[]) {
 
         /* FINE CREAZIONE SUPERNODO */
 
+        /* SYNC */
+        MPI_Barrier(MPI_COMM_WORLD);
+
         /* CREAZIONE DELLE ROOT E ALGORITMO PER TROVARE IL MIN */
         // ogni supernodo elegge un rappresentante (root), al quale ogni nodo invia il proprio valore min
 
@@ -276,7 +280,7 @@ int main(int argc, char *argv[]) {
         }
 
         /* SYNC */
-        MPI_Barrier(MPI_COMM_WORLD);
+        //MPI_Barrier(MPI_COMM_WORLD);
 
         for(i = 0; i < ratio; i++) {
             printf("[%d][%d] root: %d\n", rank, i*size+rank, root[i]);
@@ -585,10 +589,10 @@ int main(int argc, char *argv[]) {
             printf("\n");
         }
 
+        /* FINE INVIO E RICEZIONE */
+
         /* SYNC */
         MPI_Barrier(MPI_COMM_WORLD);
-
-        /* FINE INVIO E RICEZIONE */
 
         /* SCELTA DEL MINIMO DEI MINIMI NELLE ROOT */
 
@@ -676,8 +680,6 @@ int main(int argc, char *argv[]) {
         /* ALL GATHER della matrice risultato aggiornata */
 
         float allMax[n];
-        //int allIndexR[n];
-        //int allIndexC[n];
 
         q = 0;
 
@@ -725,14 +727,38 @@ int main(int argc, char *argv[]) {
     /* SYNC */
     MPI_Barrier(MPI_COMM_WORLD);
 
+//    if(rank == 0) { // stampa finale
+//        printf(" !!! END !!! SPANNING TREE MATRIX [%d] !!!\n", rank);
+//        for(i = 0; i < n; i++) {
+//            for(j = 0; j < n; j++) {
+//                printf("%.2f ", mr[i][j]);
+//            }
+//            printf("\n");
+//        }
+//    }
+
+    int values = 0;
+    float totalMin = 0;
+
     if(rank == 0) { // stampa finale
-        printf(" !!! END !!! SPANNING TREE MATRIX [%d] !!!\n", rank);
+        printf(" !!! END !!! MINIMUM SPANNING TREE !!!\n");
         for(i = 0; i < n; i++) {
-            for(j = 0; j < n; j++) {
-                printf("%.2f ", mr[i][j]);
+            for(j = i; j < n; j++) {
+                if(mr[i][j] != 0){
+                    printf("*** %.2f (%d,%d)\n", mr[i][j], i, j);
+                    totalMin = totalMin + mr[i][j];
+                    values++;
+                }
             }
-            printf("\n");
         }
+
+        printf("CHECK VALUES.. ");
+
+        if (values == n-1) {
+            printf("%d .. OK!\n", values);
+            printf("MST weight: %.2f\n", totalMin);
+        }
+        else printf("%d .. ERROR!\n", values);
     }
 
     /* SYNC */
