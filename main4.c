@@ -4,6 +4,8 @@
 
 int main(int argc, char *argv[]) {
 
+    double tComm, tCalc = 0;
+
     /* LEGGE E MEMORIZZA IL FILE CON IL GRAFO SU UNA MATRICE */
 
     FILE *file;
@@ -81,6 +83,8 @@ int main(int argc, char *argv[]) {
         min[j] = -1;
     }
 
+    tCalc = tCalc - MPI_Wtime(); // START
+
     for(i = 0; i < ratio; i++) {
 
         for (k = 0; k < n; k++) {
@@ -107,6 +111,8 @@ int main(int argc, char *argv[]) {
 
     }
 
+    tCalc = tCalc + MPI_Wtime(); // STOP
+
 //    for(i = 0; i < ratio; i++) {
 //        printf("[%d] minArray[%d]: %.2f\n", rank, i, minArray[i]);
 //    }
@@ -120,6 +126,8 @@ int main(int argc, char *argv[]) {
 
     q = 0;
 
+    tComm = tComm - MPI_Wtime();
+
     for(k = 0; k < ratio; k++) { // faccio sapere a tutti i nodi di tutti
 
         MPI_Allgather(&minArray[k], 1, MPI_FLOAT, &allMin[q], 1, MPI_FLOAT, MPI_COMM_WORLD);
@@ -130,12 +138,18 @@ int main(int argc, char *argv[]) {
 
     }
 
+    tComm = tComm + MPI_Wtime();
+
+    tCalc = tCalc - MPI_Wtime();
+
     for(k = 0; k < n; k++) {
         if(allMin[k] != -1) {
             mr[allIndexR[k]][allIndexC[k]] = allMin[k];
             mr[allIndexC[k]][allIndexR[k]] = mr[allIndexR[k]][allIndexC[k]];
         }
     }
+
+    tCalc = tCalc + MPI_Wtime();
 
     /* FINE COMUNICAZIONE */
 
@@ -186,10 +200,14 @@ int main(int argc, char *argv[]) {
 
         counter = 0;
 
+        tCalc = tCalc - MPI_Wtime();
+
         for(j = 0; j < n; j++) { // se ho gli array pieni, sono a posto
             if(array[0][j] != -1)
                 counter++;
         }
+
+        tCalc = tCalc + MPI_Wtime();
 
         if(counter == n)
             break;
@@ -205,6 +223,8 @@ int main(int argc, char *argv[]) {
         }
 
         controlA = 0;
+
+        tCalc = tCalc - MPI_Wtime();
 
         for(i = 0; i < ratio; i++) {
 
@@ -243,6 +263,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        tCalc = tCalc + MPI_Wtime();
+
 //        /* SYNC */
 //        MPI_Barrier(MPI_COMM_WORLD);
 
@@ -269,6 +291,8 @@ int main(int argc, char *argv[]) {
         for(i = 0; i < ratio; i++) {
             root[i] = array[i][0];
         }
+
+        tCalc = tCalc - MPI_Wtime();
 
         // ogni nodo conosce il suo root
         for(i = 0; i < ratio; i++) {
@@ -351,6 +375,8 @@ int main(int argc, char *argv[]) {
 //            printf(" *** [%d][%d] %.2f (%d,%d)\n ", rank, i*size+rank, min[i], indexR[i], indexC[i]); // print test
 //        }
 
+        tCalc = tCalc + MPI_Wtime();
+
         /* FINE ALGORITMO */
 
         /* SYNC */
@@ -403,6 +429,8 @@ int main(int argc, char *argv[]) {
 
         int m, q;
 
+        tCalc = tCalc - MPI_Wtime();
+
         for(i = 0; i < ratio; i++) { // per ogni processore, fisso la root e vado alla ricerca del processore che la contiene
             for(k = 0; k < ratio; k++) { // se io gestisco la root, non serve inviare; scrivo direttamente nei miei sendArray
                 if(root[i] == array[k][0]) {
@@ -419,6 +447,8 @@ int main(int argc, char *argv[]) {
             }
         } // chiude il ciclo "for i ratio"
 
+        tCalc = tCalc + MPI_Wtime();
+
         for(g = 0; g < ratio; g++) { // reinizializzazione per buffer: copio le root in myNodesRoot e i nodi gestiti in myNodes
             myRank[g] = rank;
             myNodes[g] = g*size+rank; // g*size+rank = array[g][0]
@@ -429,6 +459,8 @@ int main(int argc, char *argv[]) {
 
         /* ALL GATHER */
 
+        tComm = tComm - MPI_Wtime();
+
         for(k = 0; k < ratio; k++) { // faccio sapere a tutti i nodi di tutti
 
             MPI_Allgather(&myRank[k], 1, MPI_INT, &allRank[q], 1, MPI_INT, MPI_COMM_WORLD);
@@ -438,6 +470,8 @@ int main(int argc, char *argv[]) {
             q = q + size;
 
         }
+
+        tComm = tComm + MPI_Wtime();
 
         q = 0;
 
@@ -453,6 +487,8 @@ int main(int argc, char *argv[]) {
 
         k = 0;
 
+        tCalc = tCalc - MPI_Wtime();
+
         // sposto i dati che non gestisco dagli array "all" agli array "other"
         for(g = 0; g < n; g++) {
             if(rank != allRank[g]) {
@@ -462,6 +498,8 @@ int main(int argc, char *argv[]) {
                 k++;
             }
         }
+
+        tCalc = tCalc + MPI_Wtime();
 
         k = 0;
 
@@ -494,6 +532,8 @@ int main(int argc, char *argv[]) {
         // questo passo lo devo fare se non trovo la root dentro myNodes
         int t;
 
+        tCalc = tCalc - MPI_Wtime();
+
         for(g = 0; g < ratio; g++) {
             for(m = 0; m < len; m++) {
                 if(root[g] == otherNodes[m]) {
@@ -503,9 +543,13 @@ int main(int argc, char *argv[]) {
 
         }
 
+        tCalc = tCalc + MPI_Wtime();
+
 //        for(t = 0; t < ratio; t++) {
 //            printf("[%d] toSend: %d\n", rank, toSend[t]);
 //        }
+
+        tComm = tComm - MPI_Wtime();
 
         for(t = 0; t < ratio; t++) {
             if(toSend[t] != -1) {
@@ -517,6 +561,10 @@ int main(int argc, char *argv[]) {
                 MPI_Send(&sendIndexC[t], 1, MPI_INT, toSend[t], 0, MPI_COMM_WORLD);
             }
         }
+
+        tComm = tComm + MPI_Wtime();
+
+        tCalc = tCalc - MPI_Wtime();
 
         // precalcolo di recFrom
         // vado a scansionare otherNodesRoot e controllo se qualcuno appartiene a myNodes. Se si', metto in ricezione di otherRank
@@ -530,12 +578,15 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        tCalc = tCalc + MPI_Wtime();
+
 //        for(t = 0; t < len; t++) {
 //            printf("[%d] recFrom: %d\n", rank, recFrom[t]);
 //        }
 
         for(t = 0; t < len; t++) {
             if(recFrom[t] != -1) {
+                tComm = tComm - MPI_Wtime();
 
                 MPI_Recv(&recBufMin, 1, MPI_FLOAT, recFrom[t], 0, MPI_COMM_WORLD, &status);
 //                printf("<<< Io %d ho ricevuto %.2f da %d\n", rank, recBufMin, recFrom[t]);
@@ -543,6 +594,10 @@ int main(int argc, char *argv[]) {
                 MPI_Recv(&recBufIndexR, 1, MPI_INT, recFrom[t], 0, MPI_COMM_WORLD, &status);
 
                 MPI_Recv(&recBufIndexC, 1, MPI_INT, recFrom[t], 0, MPI_COMM_WORLD, &status);
+
+                tComm = tComm + MPI_Wtime();
+
+                tCalc = tCalc - MPI_Wtime();
 
                 for(q = 0; q < ratio; q++) {
                     if(myNodes[q] == otherNodesRoot[t]) {
@@ -558,8 +613,10 @@ int main(int argc, char *argv[]) {
                         break;
                     }
                 }
-            }
 
+                tCalc = tCalc + MPI_Wtime();
+
+            }
         }
 
 //        /* SYNC */
@@ -603,6 +660,8 @@ int main(int argc, char *argv[]) {
         int controlB = 0;
         float max;
         float maxArray[ratio];
+
+        tCalc = tCalc - MPI_Wtime();
 
         for(i = 0; i < ratio; i++) {
 
@@ -657,6 +716,8 @@ int main(int argc, char *argv[]) {
 
         } // chiude il "for i ratio"
 
+        tCalc = tCalc + MPI_Wtime();
+
 //        for(i = 0; i < ratio; i++) {
 //            printf("[%d] maxArray[%d]: %.2f\n", rank, i, maxArray[i]);
 //        }
@@ -683,6 +744,8 @@ int main(int argc, char *argv[]) {
 
         q = 0;
 
+        tComm = tComm - MPI_Wtime();
+
         for(k = 0; k < ratio; k++) { // faccio sapere a tutti i nodi di tutti
 
             MPI_Allgather(&maxArray[k], 1, MPI_FLOAT, &allMax[q], 1, MPI_FLOAT, MPI_COMM_WORLD);
@@ -693,9 +756,13 @@ int main(int argc, char *argv[]) {
 
         }
 
+        tComm = tComm + MPI_Wtime();
+
 //        for(k = 0; k < n; k++) { // per un processore non li stampa
 //            printf(" @@@ [%d][%d] allMax: %.2f , allIndexR: %d, allIndexC: %d\n", rank, k, allMax[k], allIndexR[k], allIndexC[k]);
 //        }
+
+        tCalc = tCalc - MPI_Wtime();
 
         for(k = 0; k < n; k++) {
             if(allMax[k] != -1) {
@@ -703,6 +770,8 @@ int main(int argc, char *argv[]) {
                 mr[allIndexC[k]][allIndexR[k]] = mr[allIndexR[k]][allIndexC[k]];
             }
         }
+
+        tCalc = tCalc + MPI_Wtime();
 
         /* FINE BROADCAST */
 
@@ -763,6 +832,9 @@ int main(int argc, char *argv[]) {
 
     /* SYNC */
     MPI_Barrier(MPI_COMM_WORLD);
+
+    printf("[%d] Tempo di Calcolo: %.2f us\n", rank, tCalc*1.e6);
+    printf("[%d] Tempo di Comunicazione: %.2f ms\n", rank, tComm*1.e3);
 
 //    printf("!!!!! [%d] QUIT\n", rank);
 
