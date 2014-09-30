@@ -1,0 +1,50 @@
+ ### MINIMUM SPANNING TREE ###
+* 0.10 (0,10)
+* 0.37 (1,2)
+* 0.88 (1,18)
+* 0.47 (2,13)
+* 1.02 (3,11)
+* 0.20 (4,20)
+* 0.31 (4,30)
+* 0.04 (5,9)
+* 0.26 (5,13)
+* 0.65 (5,31)
+* 0.31 (6,9)
+* 0.39 (7,10)
+* 0.11 (7,17)
+* 0.16 (8,26)
+* 1.18 (9,11)
+* 0.49 (9,15)
+* 1.52 (9,22)
+* 0.44 (11,27)
+* 1.05 (12,20)
+* 0.72 (13,17)
+* 0.53 (13,25)
+* 0.57 (14,22)
+* 1.77 (14,29)
+* 0.68 (15,20)
+* 0.08 (16,18)
+* 0.45 (16,26)
+* 0.16 (17,23)
+* 0.45 (19,23)
+* 0.16 (20,21)
+* 2.56 (23,24)
+* 0.77 (28,30)
+[!] CHECK VALUES.. 31 .. OK!
+[*] MST weight: 18.85
+[0] Tempo di Calcolo: 313.76 us
+[0] Tempo di Comunicazione: 1.17 ms
+[1] Tempo di Calcolo: 220.06 us
+[1] Tempo di Comunicazione: 0.84 ms
+[2] Tempo di Calcolo: 208.85 us
+[2] Tempo di Comunicazione: 0.82 ms
+[3] Tempo di Calcolo: 274.18 us
+[3] Tempo di Comunicazione: 0.83 ms
+[5] Tempo di Calcolo: 231.03 us
+[5] Tempo di Comunicazione: 0.86 ms
+[6] Tempo di Calcolo: 525.47 us
+[6] Tempo di Comunicazione: 0.93 ms
+[7] Tempo di Calcolo: 244.14 us
+[7] Tempo di Comunicazione: 0.85 ms
+[4] Tempo di Calcolo: 252.01 us
+[4] Tempo di Comunicazione: 0.85 ms
