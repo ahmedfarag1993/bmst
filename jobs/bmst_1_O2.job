@@ -6,7 +6,7 @@
 #@ output = /home/gruppo3/output/output_1_O2.txt
 #@ error = /home/gruppo3/output/output_1_O2_err.txt
 #@ notification = error
-#@ class = short
+#@ class = medium
 #@ blocking = UNLIMITED
 #@ total_tasks = 1
 #@ queue

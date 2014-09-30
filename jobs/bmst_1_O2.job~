@@ -3,12 +3,12 @@
 #@ job_type = parallel
 #@ initialdir = /home/gruppo3
 #@ input = /dev/null
-#@ output = /home/gruppo3/output/output_32_noopt.txt
-#@ error = /home/gruppo3/output/output_32_noopt_err.txt
+#@ output = /home/gruppo3/output/output_1_O2.txt
+#@ error = /home/gruppo3/output/output_1_O2_err.txt
 #@ notification = error
-#@ class = medium
+#@ class = short
 #@ blocking = UNLIMITED
-#@ total_tasks = 32
+#@ total_tasks = 1
 #@ queue
 
 ../bmst 32 ../graph-gen/graph.txt

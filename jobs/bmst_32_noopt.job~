@@ -6,7 +6,7 @@
 #@ output = /home/gruppo3/output/output_32_noopt.txt
 #@ error = /home/gruppo3/output/output_32_noopt_err.txt
 #@ notification = error
-#@ class = medium
+#@ class = short
 #@ blocking = UNLIMITED
 #@ total_tasks = 32
 #@ queue
