@@ -11,4 +11,4 @@
 #@ total_tasks = 2
 #@ queue
 
-../bmst 32 ../graph-gen/graph.txt
+./bmst 32 ./graph-gen/graph.txt
