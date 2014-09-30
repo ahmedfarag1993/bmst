@@ -1,0 +1,98 @@
+ ### MINIMUM SPANNING TREE ###
+* 0.10 (0,10)
+* 0.37 (1,2)
+* 0.88 (1,18)
+* 0.47 (2,13)
+* 1.02 (3,11)
+* 0.20 (4,20)
+* 0.31 (4,30)
+* 0.04 (5,9)
+* 0.26 (5,13)
+* 0.65 (5,31)
+* 0.31 (6,9)
+* 0.39 (7,10)
+* 0.11 (7,17)
+* 0.16 (8,26)
+* 1.18 (9,11)
+* 0.49 (9,15)
+* 1.52 (9,22)
+* 0.44 (11,27)
+* 1.05 (12,20)
+* 0.72 (13,17)
+* 0.53 (13,25)
+* 0.57 (14,22)
+* 1.77 (14,29)
+* 0.68 (15,20)
+* 0.08 (16,18)
+* 0.45 (16,26)
+* 0.16 (17,23)
+* 0.45 (19,23)
+* 0.16 (20,21)
+* 2.56 (23,24)
+* 0.77 (28,30)
+[!] CHECK VALUES.. 31 .. OK!
+[*] MST weight: 18.85
+[4] Tempo di Calcolo: 11284.11 us
+[4] Tempo di Comunicazione: 579.14 ms
+[12] Tempo di Calcolo: 39.10 us
+[12] Tempo di Comunicazione: 588.12 ms
+[20] Tempo di Calcolo: 494.96 us
+[20] Tempo di Comunicazione: 552.80 ms
+[14] Tempo di Calcolo: 47.68 us
+[14] Tempo di Comunicazione: 576.34 ms
+[0] Tempo di Calcolo: 58.41 us
+[0] Tempo di Comunicazione: 643.26 ms
+[2] Tempo di Calcolo: 39.34 us
+[2] Tempo di Comunicazione: 567.90 ms
+[28] Tempo di Calcolo: 40.77 us
+[28] Tempo di Comunicazione: 583.73 ms
+[30] Tempo di Calcolo: 39.34 us
+[30] Tempo di Comunicazione: 566.99 ms
+[10] Tempo di Calcolo: 61.04 us
+[10] Tempo di Comunicazione: 591.60 ms
+[16] Tempo di Calcolo: 44.58 us
+[16] Tempo di Comunicazione: 606.37 ms
+[18] Tempo di Calcolo: 57.70 us
+[18] Tempo di Comunicazione: 580.72 ms
+[22] Tempo di Calcolo: 40.53 us
+[22] Tempo di Comunicazione: 567.53 ms
+[26] Tempo di Calcolo: 56.03 us
+[26] Tempo di Comunicazione: 592.31 ms
+[6] Tempo di Calcolo: 4546.17 us
+[6] Tempo di Comunicazione: 572.35 ms
+[8] Tempo di Calcolo: 66.04 us
+[8] Tempo di Comunicazione: 603.26 ms
+[24] Tempo di Calcolo: 3466.61 us
+[24] Tempo di Comunicazione: 594.76 ms
+[13] Tempo di Calcolo: 36.95 us
+[13] Tempo di Comunicazione: 573.36 ms
+[7] Tempo di Calcolo: 37.91 us
+[7] Tempo di Comunicazione: 541.69 ms
+[11] Tempo di Calcolo: 69.14 us
+[11] Tempo di Comunicazione: 587.37 ms
+[15] Tempo di Calcolo: 42.44 us
+[15] Tempo di Comunicazione: 576.32 ms
+[19] Tempo di Calcolo: 42.68 us
+[19] Tempo di Comunicazione: 543.84 ms
+[27] Tempo di Calcolo: 51.26 us
+[27] Tempo di Comunicazione: 580.90 ms
+[31] Tempo di Calcolo: 47.68 us
+[31] Tempo di Comunicazione: 565.25 ms
+[9] Tempo di Calcolo: 58.17 us
+[9] Tempo di Comunicazione: 593.50 ms
+[3] Tempo di Calcolo: 3315.45 us
+[3] Tempo di Comunicazione: 542.63 ms
+[17] Tempo di Calcolo: 34.33 us
+[17] Tempo di Comunicazione: 602.24 ms
+[5] Tempo di Calcolo: 48.40 us
+[5] Tempo di Comunicazione: 541.41 ms
+[21] Tempo di Calcolo: 43.15 us
+[21] Tempo di Comunicazione: 550.69 ms
+[1] Tempo di Calcolo: 64.37 us
+[1] Tempo di Comunicazione: 594.69 ms
+[25] Tempo di Calcolo: 7243.63 us
+[25] Tempo di Comunicazione: 580.19 ms
+[23] Tempo di Calcolo: 43.39 us
+[23] Tempo di Comunicazione: 552.74 ms
+[29] Tempo di Calcolo: 9794.47 us
+[29] Tempo di Comunicazione: 575.93 ms
