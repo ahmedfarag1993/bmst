@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#@ job_type = parallel
+#@ initialdir = /home/gruppo3/test
+#@ input = /dev/null
+#@ output = /home/gruppo3/test/output_test.txt
+#@ error = /home/gruppo3/test/output_error.txt
+#@ notification = error
+#@ class = short
+#@ blocking = UNLIMITED
+#@ total_tasks = 8
+#@ queue
+
+./bmst 32 ../graph-gen/graph.txt
