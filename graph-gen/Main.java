@@ -34,20 +34,20 @@ public class Main {
 		// fill the top-right corner of the matrix
 		// with random weights
 
-		int r;
+		//int r;
 
 		for (int i = 0; i < numVert; i++) {
 			for (int j = i; j < numVert; j++) {
 				if (i != j) {
-					r = rand.nextInt(2);
-					if (r == 0) {
-						adjMatrix[i][j] = 0;
-					} else {
+					//r = rand.nextInt(2);
+					//if (r == 0) {
+					//	adjMatrix[i][j] = 0;
+					//} else {
 						// random weight
-						adjMatrix[i][j] = rand.nextDouble() * 10;
+						adjMatrix[i][j] = rand.nextDouble() * 100000;
 						n = (int) (adjMatrix[i][j] * 100);
 						adjMatrix[i][j] = (double) n / 100;
-					}
+					//}
 				} else
 					adjMatrix[i][j] = 0; // null weight on diagonal
 			}
